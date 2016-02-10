@@ -12,7 +12,7 @@
     "build:development": "outputPath=build/development; rm -rf $outputPath; NODE_ENV=development webpack --config webpack/development.config.js --output-path $outputPath --progress;",
     "build:library:docs": "shjs scripts/buildLibraryDocs.js",
     "build:library": "outputPath=build/library; rm -rf $outputPath; NODE_ENV=production webpack --config webpack/library.config.js --output-path $outputPath --progress; npm run build:library:docs",
-    "build:manager": "outputPath=build/manager; rm -rf $outputPath; NODE_ENV=production webpack --config webpack/manager.config.js --output-path $outputPath --progress; cat $outputPath/*.js > $outputPath/index.js; rm $outputPath/mashup.config.js",
+    "build:manager": "outputPath=build/manager; rm -rf $outputPath; NODE_ENV=production webpack --config webpack/manager.config.js --output-path $outputPath --progress; cd $outputPath; cat mashup.config.js index.js > _tmp.js; rm mashup.config.js index.js; mv _tmp.js index.js;",
     "build:all": "npm run build:library && npm run build:manager"
   },
   "devDependencies": {
