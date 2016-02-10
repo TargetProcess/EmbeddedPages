@@ -1,0 +1,13 @@
+.frame {
+    width: 100%;
+    height: 700px;
+    overflow: scroll;
+    border: 1px solid #CCCCCC;
+    min-height: 70vh;
+}
+
+.empty {
+    color: #BBBBBB;
+    font-size: 11px;
+    display: block;
+}

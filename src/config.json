@@ -1,0 +1,10 @@
+{
+
+    "tabs": [{
+        "entityTypeName": "UserStory",
+        "customFieldName": "Favorite Url",
+        "processName": "Kanban",
+        "frameTemplate": "<iframe src=\"${url}\" width=\"854\" height=\"480\" frameborder=\"0\" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>"
+    }]
+
+}
