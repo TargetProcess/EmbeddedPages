@@ -121,7 +121,7 @@ const getUrl = (customField, value) => {
         case 'url':
             return (value && value.url) ? value.url : null;
         case 'templatedurl':
-            return value ? String(value).replace(/\{0\}/, value) : null;
+            return value ? String(customField.value).replace(/\{0\}/, value) : null;
         default:
             return '';
     }
