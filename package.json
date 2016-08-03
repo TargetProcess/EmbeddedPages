@@ -8,11 +8,12 @@
     "mashup"
   ],
   "scripts": {
-    "start": "outputPath=$TARGETPROCESS_MASHUPS_PATH/$npm_package_name; rm -rf $outputPath; NODE_ENV=development webpack --config webpack/development.config.js --watch --output-path $outputPath",
-    "build:development": "outputPath=build/development; rm -rf $outputPath; NODE_ENV=development webpack --config webpack/development.config.js --output-path $outputPath --progress;",
-    "build:library:docs": "shjs scripts/buildLibraryDocs.js",
-    "build:library": "outputPath=build/library; rm -rf $outputPath; NODE_ENV=production webpack --config webpack/library.config.js --output-path $outputPath --progress; npm run build:library:docs",
-    "build:manager": "outputPath=build/manager; rm -rf $outputPath; NODE_ENV=production webpack --config webpack/manager.config.js --output-path $outputPath --progress; cd $outputPath; cat mashup.config.js index.js > _tmp.js; rm mashup.config.js index.js; mv _tmp.js index.js;",
+    "start": "node scripts/startWatcher.js",
+    "build:development": "node scripts/buildDevelopment.js",
+    "build:library:docs": "node scripts/buildLibraryDocs.js",
+    "build:library:scripts": "node scripts/buildLibraryScripts.js",
+    "build:library": "npm run build:library:scripts && npm run build:library:docs",
+    "build:manager": "node scripts/buildManager.js",
     "build:all": "npm run build:library && npm run build:manager"
   },
   "devDependencies": {
@@ -22,11 +23,12 @@
     "babel-loader": "^6.2.2",
     "babel-preset-es2015": "^6.3.13",
     "babel-preset-stage-1": "^6.3.13",
+    "cross-env": "^2.0.0",
     "css-loader": "^0.23.1",
-    "eslint": "^2.0.0-rc.0",
+    "eslint": "^2.0.0",
     "file-loader": "^0.8.5",
     "postcss-loader": "^0.8.0",
-    "shelljs": "^0.5.3",
+    "shelljs": "^0.7.3",
     "style-loader": "^0.13.0",
     "targetprocess-mashup-helper": "^0.4.1",
     "targetprocess-mashup-webpack-plugin": "^1.0.0",
