@@ -132,18 +132,19 @@ const renderTemplate = (template, templateData) =>
 
 const resizeDefaultFrame = ($frame) => {
     const padding = 80;
-    const $left = $frame.closest('.tau-page-entity').find('.additional-info');
+    const $infoPanel = $frame.closest('.tau-page-entity').find('.additional-info');
 
     $frame.css({
-        height: $left.height() - padding
+        height: $infoPanel.height() - padding
     });
 };
 
-const innerRenderTab = (el, template, customField, value, isDefault) => {
+const innerRenderTab = (el, template, adjustFrameSize, {customField, value, entity}) => {
     const url = getUrl(customField, value);
 
     const templateData = {
         url,
+        entityId: entity.id,
         name: customField.name
     };
 
@@ -151,7 +152,7 @@ const innerRenderTab = (el, template, customField, value, isDefault) => {
 
     $(el).html($html);
 
-    if (isDefault) {
+    if (adjustFrameSize) {
         const timeout = 3000;
         resizeDefaultFrame($html);
         setTimeout(() => resizeDefaultFrame($html), timeout);
@@ -159,15 +160,15 @@ const innerRenderTab = (el, template, customField, value, isDefault) => {
 };
 
 const renderTab = (store, entity, tabConfig, customField, dom) => {
-    const isDefault = !tabConfig.frameTemplate;
+    const adjustFrameSize = !tabConfig.frameTemplate || tabConfig.adjustFrameSize;
     const template = tabConfig.frameTemplate || defaultTemplate;
 
     when(getCustomFieldValue(store, entity, tabConfig.customFieldName))
         .then(({value}) =>
-            innerRenderTab(dom, template, customField, value, isDefault));
+            innerRenderTab(dom, template, adjustFrameSize, {customField, value, entity}));
 
     const storeListener = onChange(store, entity, tabConfig.customFieldName, (changedValue) =>
-        innerRenderTab(dom, template, customField, changedValue, isDefault));
+        innerRenderTab(dom, template, adjustFrameSize, {customField, value: changedValue, entity}));
 
     return () => store.unbind(storeListener);
 };
