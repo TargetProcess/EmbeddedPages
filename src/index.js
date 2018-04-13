@@ -19,8 +19,9 @@ const getTabsConfig = (config) => {
         return config;
     }
     if (config.children) {
-        for (var i = 0; i < config.children.length; i++) {
+        for (let i = 0; i < config.children.length; i++) {
             const childTabs = getTabsConfig(config.children[i]);
+
             if (childTabs) {
                 return childTabs;
             }
@@ -73,7 +74,6 @@ const onConfigReadyForIntegration = (addTabCb, config, context) => {
                 destroyListener.remove();
                 onDestroy(e);
             });
-
         })
         .then(configDef.resolve);
 
@@ -83,7 +83,8 @@ const onConfigReadyForIntegration = (addTabCb, config, context) => {
 const lc = (str) => str.toLowerCase();
 
 const findCustomFieldValue = (customFieldName, customFieldValues) => {
-    var name = lc(customFieldName);
+    const name = lc(customFieldName);
+
     return find(customFieldValues, (cf) => lc(cf.name) === name);
 };
 
@@ -108,6 +109,7 @@ const onChange = (store, entity, customFieldName, listenerFunction) => {
         hasChanges: ['customFields']
     }, (res) => {
         const customFieldValue = findCustomFieldValue(customFieldName, res.data.changes.customFields);
+
         if (customFieldValue) {
             listenerFunction(customFieldValue.value);
         }
@@ -154,6 +156,7 @@ const innerRenderTab = (el, template, adjustFrameSize, {customField, value, enti
 
     if (adjustFrameSize) {
         const timeout = 3000;
+
         resizeDefaultFrame($html);
         setTimeout(() => resizeDefaultFrame($html), timeout);
     }
@@ -189,6 +192,7 @@ const loadProcess = (entity) =>
 
 const inTypes = (customField) => {
     const type = lc(customField.type);
+
     return type === 'url' || type === 'templatedurl';
 };
 
@@ -201,7 +205,6 @@ const addTabCallback = (tabConfig, createTab, context) => {
 
     return when(loadCustomField(entity, tabConfig), tabConfig.processName ? loadProcess(entity) : null)
         .then((customField, process) => {
-
             if (!customField || !inTypes(customField)) {
                 return createTab();
             }
@@ -216,11 +219,11 @@ const addTabCallback = (tabConfig, createTab, context) => {
                     label: tabConfig.customFieldName,
                     render: (dom) => {
                         const store = context.configurator.getStore();
+
                         unsubscribe = renderTab(store, entity, tabConfig, customField, dom);
                     },
                     onDestroy: () => unsubscribe()
                 });
-
             } catch (e) {
                 createTab();
                 throw e;
@@ -232,14 +235,16 @@ const addTabs = (tabs) => {
     // Subscribe to configReadyForIntegration as late as possible to be in subscription chain after mashupsForViews
     globalBus.once('contextRetrieved', () => {
         globalBus.on('configReadyForIntegration', (e) => {
-            var data = e.data;
+            const intergrationData = e.data;
             const resultConfigPromises = tabs.map((tabConfig) => {
                 const addTabCb = (createTab, context) => addTabCallback(tabConfig, createTab, context);
-                return onConfigReadyForIntegration(addTabCb, {children: data.children}, data.context);
+
+                return onConfigReadyForIntegration(addTabCb, {children: intergrationData.children},
+                    intergrationData.context);
             });
 
-            resultConfigPromises.unshift(data.integrationReadyPromise);
-            data.integrationReadyPromise = when.apply(null, resultConfigPromises).then((integration) => integration);
+            resultConfigPromises.unshift(intergrationData.integrationReadyPromise);
+            intergrationData.integrationReadyPromise = when(...resultConfigPromises).then((integration) => integration);
         });
     });
 };

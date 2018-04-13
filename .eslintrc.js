@@ -1,4 +1,4 @@
-{
+module.exports = {
     "parserOptions": {
         "ecmaVersion": 6,
         "sourceType": "module",
@@ -68,7 +68,7 @@
         "no-loop-func": 2,
         "no-mixed-requires": [2],
         "no-mixed-spaces-and-tabs": [2, false],
-        "linebreak-style": [2, "unix"],
+        "linebreak-style": [2, process.platform === 'win32' ? "windows" : "unix"],
         "no-multi-spaces": 2,
         "no-multi-str": 2,
         "no-multiple-empty-lines": [2, {"max": 1}],
@@ -120,7 +120,7 @@
         "no-unreachable": 2,
         "no-unused-expressions": 2,
         "no-unused-labels": 2,
-        "no-unused-vars": [2, {"vars": "all", "args": "all"}],
+        "no-unused-vars": [2, {"vars": "all", "args": "after-used"}],
         "no-use-before-define": 2,
         "no-useless-call": 2,
         "no-useless-concat": 2,
@@ -129,7 +129,7 @@
         "no-var": 2,
         "no-warning-comments": [0, {"terms": ["todo", "fixme", "xxx"], "location": "start"}],
         "no-with": 2,
-        "no-magic-numbers": [2, {"ignoreArrayIndexes": true, "enforceConst": true}],
+        "no-magic-numbers": [2, {"ignore": [0], "ignoreArrayIndexes": true, "enforceConst": true}],
 
         "array-bracket-spacing": [2, "never"],
         "array-callback-return": 2,
@@ -183,7 +183,7 @@
         "one-var-declaration-per-line": 2,
         "operator-assignment": [2, "never"],
         "operator-linebreak": 0,
-        "padded-blocks": [2, "always"],
+        "padded-blocks": [2, "never"],
         "prefer-arrow-callback": 2,
         "prefer-const": 2,
         "prefer-reflect": 0,
@@ -218,4 +218,4 @@
         "yield-star-spacing": [2, {"before": false, "after": true}],
         "yoda": [2, "never"]
     }
-}
+};

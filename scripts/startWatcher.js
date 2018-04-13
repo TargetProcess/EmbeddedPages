@@ -3,6 +3,7 @@ const shell = require('shelljs');
 
 const mashupsPathVariable = 'TARGETPROCESS_MASHUPS_PATH';
 const mashupsPath = shell.env[mashupsPathVariable]; // e.g. 'C:\tp3\Code\Main\Tp.Web\JavaScript\Mashups\Common'
+
 if (!mashupsPath) {
     throw new Error(`Please define ${mashupsPathVariable} env variable`);
 }

@@ -8,7 +8,6 @@ const TargetprocessMashupPlugin = require('targetprocess-mashup-webpack-plugin')
 const pkg = require('../package.json');
 
 const createConfig = (options_) => {
-
     const options = Object.assign({
         mashupName: pkg.name,
         production: false,
@@ -58,10 +57,8 @@ const createConfig = (options_) => {
     config.postcss = [autoprefixer];
 
     if (!options.production) {
-
         config.debug = true;
         config.devtool = 'eval-source-map';
-
     }
 
     config.plugins = [
@@ -80,21 +77,17 @@ const createConfig = (options_) => {
     ];
 
     if (options.mashupManager) {
-
         config.plugins = config.plugins.concat(new webpack.optimize.LimitChunkCountPlugin({
             maxChunks: 1
         }));
-
     }
 
     if (options.production) {
-
         config.plugins = config.plugins.concat(new webpack.optimize.UglifyJsPlugin({
             compress: {
                 warnings: false
             }
         }));
-
     }
 
     config.externals = [
@@ -108,7 +101,6 @@ const createConfig = (options_) => {
     ];
 
     return config;
-
 };
 
 module.exports = createConfig;

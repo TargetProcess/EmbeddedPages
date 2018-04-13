@@ -1,5 +1,4 @@
 tau.mashups.addModule('EmbeddedPages/config', {
-
     tabs: [{
         /* Sample embedded page of the 'CustomPageUrl' Custom Field of a User Story of a Project with the 'Scrum' Process */
         entityTypeName: 'UserStory',
