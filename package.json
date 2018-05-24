@@ -25,7 +25,11 @@
     "babel-preset-stage-1": "^6.3.13",
     "cross-env": "^2.0.0",
     "css-loader": "^0.23.1",
-    "eslint": "^2.0.0",
+    "eslint": "^4.19.1",
+    "eslint-plugin-import": "^2.12.0",
+    "eslint-plugin-node": "^6.0.1",
+    "eslint-plugin-promise": "^3.7.0",
+    "eslint-plugin-standard": "^3.1.0",
     "file-loader": "^0.8.5",
     "postcss-loader": "^0.8.0",
     "shelljs": "^0.7.3",
@@ -34,7 +38,9 @@
     "targetprocess-mashup-webpack-plugin": "^1.0.0",
     "webpack": "^1.12.12"
   },
-  "dependencies": {},
+  "dependencies": {
+    "cancelable-promise": "^2.4.0"
+  },
   "author": "Targetprocess <dev@targetprocess.com>",
   "license": "MIT",
   "contributors": [
