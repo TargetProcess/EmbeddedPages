@@ -91,7 +91,11 @@ const createConfig = (options_) => {
 
         config.plugins = config.plugins.concat(new webpack.optimize.UglifyJsPlugin({
             compress: {
-                warnings: false
+                warnings: false,
+                properties: false
+            },
+            output: {
+                keep_quoted_props: true,
             }
         }));
 
