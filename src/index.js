@@ -190,7 +190,7 @@ const loadEntityContext = (entity) =>
     contextFactory.create(entity, configurator);
 
 const loadCustomFieldsAndProcess = entity =>
-    $.ajax(`/targetprocess/api/v2/${entity.entityType.name.toLowerCase()}?where=(id==${entity.id})&select={customValues,process:{project.process.id,project.process.name}}`)
+    $.ajax(`/api/v2/${entity.entityType.name.toLowerCase()}?where=(id==${entity.id})&select={customValues,process:{project.process.id,project.process.name}}`)
         .then(response => response.items[0]);
 
 const inTypes = (customField) => {
