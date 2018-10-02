@@ -1,9 +1,7 @@
 /* globals mashup */
-
-import {find, isFunction, noop} from 'underscore';
+import {find, isFunction, noop, compact} from 'underscore';
 import $, {when, Deferred} from 'jquery';
 import configurator from 'tau/configurator';
-import contextFactory from 'tau/models/page.entity/entity.context.factory';
 import {addBusListener} from 'targetprocess-mashup-helper';
 import S from './index.css';
 
@@ -18,6 +16,7 @@ const getTabsConfig = (config) => {
     if (config.type === 'tabs') {
         return config;
     }
+
     if (config.children) {
         for (let i = 0; i < config.children.length; i++) {
             const childTabs = getTabsConfig(config.children[i]);
@@ -30,46 +29,44 @@ const getTabsConfig = (config) => {
 };
 
 const configReadyForIntegration = (tabConfig, config, context) => {
-    const tabDef = prepareTabConfig(tabConfig, context);
+    const tabConf = prepareTabConfig(tabConfig, context);
 
-    return tabDef.then((tabConf) => {
-        if (!tabConf) {
-            return;
+    if (!tabConf) {
+        return;
+    }
+
+    const {label: labelText, render, onDestroy = noop} = tabConf;
+    const tabsConfig = getTabsConfig(config) || {tabs: []};
+    const tabId = `tab${tabsConfig.tabs.length}`;
+    const headerBusId = `header_${tabId}`;
+    const contentBusId = `content_${tabId}`;
+
+    tabsConfig.tabs.push({
+        label: tabId,
+        header: [{
+            type: 'label',
+            name: headerBusId,
+            text: labelText
+        }],
+        items: [{
+            name: contentBusId,
+            type: 'container'
+        }]
+    });
+
+    const renderListener = addBusListener(contentBusId, 'afterRender', (e) => {
+        if (typeof render === 'string') {
+            e.data.element.html(render);
+        } else {
+            render(e.data.element.first(), context);
         }
+    });
 
-        const {label: labelText, render, onDestroy = noop} = tabConf;
-        const tabsConfig = getTabsConfig(config) || {tabs: []};
-        const tabId = `tab${tabsConfig.tabs.length}`;
-        const headerBusId = `header_${tabId}`;
-        const contentBusId = `content_${tabId}`;
-
-        tabsConfig.tabs.push({
-            label: tabId,
-            header: [{
-                type: 'label',
-                name: headerBusId,
-                text: labelText
-            }],
-            items: [{
-                name: contentBusId,
-                type: 'container'
-            }]
-        });
-
-        const renderListener = addBusListener(contentBusId, 'afterRender', (e) => {
-            if (typeof render === 'string') {
-                e.data.element.html(render);
-            } else {
-                render(e.data.element.first(), context);
-            }
-        });
-
-        const destroyListener = addBusListener(contentBusId, 'destroy', (e) => {
-            renderListener.remove();
-            destroyListener.remove();
-            onDestroy(e);
-        });
-    }).promise();
+    const destroyListener = addBusListener(contentBusId, 'destroy', (e) => {
+        renderListener.remove();
+        destroyListener.remove();
+        onDestroy(e);
+    });
 };
 
 const lc = (str) => str.toLowerCase();
@@ -131,11 +128,7 @@ const resizeDefaultFrame = ($frame) => {
     });
 };
 
-const innerRenderTab = (el, template, adjustFrameSize, {customField, value, entity}, cancellationToken) => {
-    if (cancellationToken.isCancelled) {
-        return;
-    }
-
+const innerRenderTab = (el, template, adjustFrameSize, {customField, value, entity}) => {
     const url = getUrl(customField, value);
 
     const templateData = {
@@ -155,132 +148,88 @@ const innerRenderTab = (el, template, adjustFrameSize, {customField, value, enti
     }
 };
 
-const renderTab = (entity, tabConfig, customField, dom, cancellationToken) => {
+const renderTab = ({entity, tabConfig, customField, dom, context}) => {
     const adjustFrameSize = !tabConfig.frameTemplate || tabConfig.adjustFrameSize;
     const template = tabConfig.frameTemplate || defaultTemplate;
-    let cancelled = false;
-    const destroyable = {
-        destroy: () => {
-            cancelled = true;
-        }
+    const store = context.configurator.getStore();
+
+    when(getCustomFieldValue(store, entity, tabConfig.customFieldName))
+        .then(({value}) =>
+            innerRenderTab(dom, template, adjustFrameSize, {
+                customField,
+                value,
+                entity
+            }));
+
+    const storeListener = onChange(store, entity, tabConfig.customFieldName, (changedValue) =>
+        innerRenderTab(dom, template, adjustFrameSize, {
+            customField,
+            value: changedValue,
+            entity
+        }));
+
+    return {
+        destroy: () => store.unbind(storeListener)
     };
-
-    loadEntityContext(entity).then(context => {
-        const store = context.configurator.getStore();
-
-        when(getCustomFieldValue(store, entity, tabConfig.customFieldName))
-            .then(({value}) =>
-                innerRenderTab(dom, template, adjustFrameSize, {customField, value, entity}, cancellationToken));
-        if (!cancelled) {
-            const storeListener = onChange(store, entity, tabConfig.customFieldName, (changedValue) =>
-                innerRenderTab(dom, template, adjustFrameSize, {
-                    customField,
-                    value: changedValue,
-                    entity
-                }, cancellationToken));
-
-            destroyable.destroy = () => store.unbind(storeListener);
-        }
-    });
-
-    return destroyable;
 };
-
-const loadEntityContext = (entity) =>
-    contextFactory.create(entity, configurator);
-
-const loadCustomFieldsAndProcess = entity =>
-    $.ajax(`/api/v2/${entity.entityType.name.toLowerCase()}?where=(id==${entity.id})&select={customValues,process:{project.process.id,project.process.name}}`)
-        .then(response => response.items[0]);
 
 const inTypes = (customField) => {
     const type = lc(customField.type);
     return type === 'url' || type === 'templatedurl';
 };
 
-const resolveDeferred = value => {
-    const deferred = $.Deferred();
-    deferred.resolve(value);
-    return deferred;
-};
-
-const createCancellationToken = () => {
-    let cancelled = false;
-
-    return {
-        cancel () {
-            cancelled = true;
-        },
-
-        get isCancelled () {
-            return cancelled;
-        }
-    };
-};
-
-let cancellationTokens = [];
-
 const prepareTabConfig = (tabConfig, context) => {
     const {entity} = context;
+    const lowercasedEntityTypeName = lc(tabConfig.entityTypeName);
 
-    if (lc(entity.entityType.name) !== lc(tabConfig.entityTypeName)) {
-        return resolveDeferred();
+    if (lc(entity.entityType.name) !== lowercasedEntityTypeName) {
+        return null;
     }
 
-    const cancellationToken = createCancellationToken();
+    const customFields = context.getCustomFields();
+    const lowercasedCfName = lc(tabConfig.customFieldName);
 
-    cancellationTokens.push(cancellationToken);
+    const customFieldOfTab = find(customFields,
+        cf => lc(cf.name) === lowercasedCfName &&
+            lc(cf.entityKind) === lowercasedEntityTypeName);
 
-    // return when(loadCustomField(entity, tabConfig), tabConfig.processName ? loadProcess(entity) : null)
-    return loadCustomFieldsAndProcess(entity)
-        .then(({customValues: {customFields = []}, process}) => {
-            if (cancellationToken.isCancelled) {
-                return;
-            }
+    if (!customFieldOfTab || !inTypes(customFieldOfTab)) {
+        return null;
+    }
 
-            const customField = find(customFields,
-                cf => lc(cf.name) === lc(tabConfig.customFieldName));
+    const process = context.getProject().process;
 
-            if (!customField || !inTypes(customField)) {
-                return;
-            }
+    if (tabConfig.processName && lc(process.name) !== lc(tabConfig.processName)) {
+        return null;
+    }
 
-            if (process && tabConfig.processName && lc(process.name) !== lc(tabConfig.processName)) {
-                return;
-            }
+    let destroyable;
 
-            let destroyable;
-
-            return {
-                label: tabConfig.customFieldName,
-                render: (dom) => {
-                    destroyable = renderTab(entity, tabConfig, customField, dom, cancellationToken);
-                },
-                onDestroy: () => destroyable.destroy()
-            };
-        });
+    return {
+        label: tabConfig.customFieldName,
+        render: (dom) => {
+            destroyable = renderTab({
+                context,
+                entity,
+                tabConfig,
+                customField: customFieldOfTab,
+                dom
+            });
+        },
+        onDestroy: () => destroyable.destroy()
+    };
 };
 
 const addTabs = (tabs) => {
     // Subscribe to configReadyForIntegration as late as possible to be in subscription chain after mashupsForViews
     globalBus.once('contextRetrieved', () => {
         globalBus.on('configReadyForIntegration', (e) => {
-            // cancellationTokens.forEach(cancellationToken => cancellationToken.cancel());
-            cancellationTokens = [];
-
             const data = e.data;
-            const resultConfigPromises = tabs.map(tabConfig => configReadyForIntegration(tabConfig, {
+            tabs.forEach(tabConfig => configReadyForIntegration(tabConfig, {
                 children: data.children
             }, data.context));
-
-            resultConfigPromises.unshift(data.integrationReadyPromise);
-            data.integrationReadyPromise = when.apply(null, resultConfigPromises).then((integration) => integration);
         });
     });
 };
 
-const init = (mashupConfig) => {
-    addTabs(mashupConfig.tabs);
-};
-
-init(mashup.config);
+addTabs(mashup.config.tabs);
