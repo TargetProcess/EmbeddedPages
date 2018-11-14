@@ -197,7 +197,7 @@ const prepareTabConfig = (tabConfig, context) => {
         return null;
     }
 
-    const process = context.getProject().process;
+    const process = context.getProcess();
 
     if (tabConfig.processName && lc(process.name) !== lc(tabConfig.processName)) {
         return null;
